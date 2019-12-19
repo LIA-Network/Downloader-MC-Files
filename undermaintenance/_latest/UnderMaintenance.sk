@@ -1,0 +1,110 @@
+options:
+	prefix: &6&lUnder Maintenance &7&l»
+	adminOnlyPrefix: &6&lUnder Maintenance &8| &c&lADMIN ONLY &7&l»
+
+	serverName: Test Server # NO SPEECH MARKS ("") & You can use color codes (&6 = Gold | &l = Bold)
+
+	SkriptName: UnderMaintenance
+	ColoredSkriptName: &6&lUnderMaintenance
+
+	Version: 1.0.0
+
+	Permission: UnderMaintenance
+	AdminPermission: {@Permission}.Admin
+	PlayerPermission: {@Permission}.Player
+	BypassPermission: {@Permission}.Bypass
+
+command /undermaintenance [<text>] [<text>]:
+	permission: {@AdminPermission}
+	trigger:
+		if arg-1 is not set:
+			if player has permission "{@AdminPermission}":
+				send "&7» &eRunning {@ColoredSkriptName} v{@Version} &eby &6&oDeagoTheDoggo&r&e."
+				send "&7» &eUse &a/undermaintenance help &eto view a list of commands."
+			else:
+				send "&7» &2Running {@ColoredSkriptName} v1.0.0 &2by &6&oDeagoTheDoggo&r&2."
+				send "&7» &c&lYou do not have permission to use {@SkriptName}."
+
+		if arg-1 is "help":
+			if player has permission "{@AdminPermission}":
+				send "{@prefix} &6Help:"
+				send "&d» &a/undermaintenance help &7- &eBrings up the help."
+				send "&d» &a/undermaintenance on &7- &eTurns on maintenance mode."
+				send "&d» &a/undermaintenance off &7- &eTurns off maintenance mode."
+				send "&d» &a/undermaintenance toggle &7- &eToggles maintenance mode."
+				send "&d» &a/undermaintenance gui &7- &eOpens maintenance mode gui. &7| &cWork in progress."
+			else:
+				send "{@prefix} &c&lYou do not have permission to use {@SkriptName}."
+
+		if arg-1 is "on":
+			if player has permission "{@AdminPermission}":
+				set {UnderMaintenance::MaintenanceMode} to true
+				HandleMaintenanceModeOn(player)
+				send "{@prefix} &aTurned on maintenance mode!"
+
+		if arg-1 is "off":
+			if player has permission "{@AdminPermission}":
+				set {UnderMaintenance::MaintenanceMode} to false
+				HandleMaintenanceModeOff(player)
+				send "{@prefix} &cTurned off maintenance mode!"
+
+		if arg-1 is "toggle":
+			if player has permission "{@AdminPermission}":
+				if {UnderMaintenance::MaintenanceMode} is true:
+					set {UnderMaintenance::MaintenanceMode} to false
+					HandleMaintenanceModeOff(player)
+					send "{@prefix} &cTurned off maintenance mode!"
+				else if {UnderMaintenance::MaintenanceMode} is false:
+					set {UnderMaintenance::MaintenanceMode} to true
+					HandleMaintenanceModeOn(player)
+					send "{@prefix} &aTurned on maintenance mode!"
+
+		if arg-1 is "gui":
+			if player has permission "{@AdminPermission}":
+				open chest with 3 rows named "&e&lMaintenance Mode" to player
+				format slot 11 of player with paper named "&a&lON" with lore "&aTurn on Maintenance Mode." to close then run [execute player command "undermaintenance:on"]
+				format slot 13 of player with paper named "&e&lTOGGLE" with lore "&eToggle &aon&e/&coff &eMaintenance Mode." to close then run [execute player command "undermaintenance:toggle"]
+				format slot 15 of player with paper named "&c&lOFF" with lore "&cTurn off Maintenance Mode." to close then run [execute player command "undermaintenance:off"]
+
+command /undermaintenance:on:
+	permission: {@AdminPermission}
+	trigger:
+		set {UnderMaintenance::MaintenanceMode} to true
+		HandleMaintenanceModeOn(player)
+
+command /undermaintenance:off:
+	permission: {@AdminPermission}
+	trigger:
+		set {UnderMaintenance::MaintenanceMode} to false
+		HandleMaintenanceModeOff(player)
+
+command /undermaintenance:toggle:
+	permission: {@AdminPermission}
+	trigger:
+		if {UnderMaintenance::MaintenanceMode} is true:
+			set {UnderMaintenance::MaintenanceMode} to false
+			HandleMaintenanceModeOff(player)
+		else if {UnderMaintenance::MaintenanceMode} is false:
+			set {UnderMaintenance::MaintenanceMode} to true
+			HandleMaintenanceModeOn(player)
+
+function HandleMaintenanceModeOn(p: player):
+	loop all players:
+		if loop-player has permission "{@AdminPermission}" or "{@BypassPermission}":
+			send "{@adminOnlyPrefix} &aMaintenance mode has been enabled by &e%{_p}%&a!" to loop-players
+		else:
+			kick loop-players
+
+function HandleMaintenanceModeOff(p: player):
+	loop all players:
+		if loop-player has permission "{@AdminPermission}" or "{@BypassPermission}":
+			send "{@adminOnlyPrefix} &cMaintenance mode has been disabled by &e%{_p}%&c!" to loop-players
+		else:
+			stop
+
+on join:
+	if {UnderMaintenance::MaintenanceMode} is true:
+		if player has permission "{@AdminPermission}" or "{@BypassPermission}":
+			stop
+		else:
+			kick player
